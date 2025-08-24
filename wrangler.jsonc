@@ -36,6 +36,18 @@
           "binding": "DATABASE"
         }
       ],
+      "secrets_store_secrets": [
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_ID",
+          "binding": "PRIVY_APP_ID"
+        },
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_SECRET",
+          "binding": "PRIVY_APP_SECRET"
+        }
+      ],
       "routes": [
         {
           "pattern": "**",
@@ -50,6 +62,18 @@
         {
           "id": "a21e6ec2b1a14a038c1b23e93a718e93",
           "binding": "DATABASE"
+        }
+      ],
+      "secrets_store_secrets": [
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_ID",
+          "binding": "PRIVY_APP_ID"
+        },
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_SECRET",
+          "binding": "PRIVY_APP_SECRET"
         }
       ],
       "routes": [
