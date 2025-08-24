@@ -6,13 +6,13 @@
     "target": "es2022",
     "verbatimModuleSyntax": false,
     "allowJs": true,
+    "strict": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
     /* Strictness */
     "noImplicitAny": false,
     "noImplicitThis": true,
-    "strictNullChecks": false,
-    "strict": true,
+    "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
     /* If NOT transpiling with TypeScript: */
     "moduleResolution": "Bundler",

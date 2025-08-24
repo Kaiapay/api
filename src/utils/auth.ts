@@ -2,11 +2,12 @@ import { PrivyClient } from "@privy-io/server-auth";
 import { AppContext } from "../types";
 
 export async function requireAuth(c: AppContext, next: any) {
-  let token = null;
+  let token: string | undefined = undefined;
   const cookie = c.req.header("cookie");
-  let tokenFromCookie = cookie
+  let tokenFromCookie = (cookie ?? "")
     .split(";")
     .find((c) => c.trim().startsWith("privy-token="));
+
   token = tokenFromCookie?.replace("privy-token=", "").trim();
 
   if (!token) {
