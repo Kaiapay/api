@@ -9,11 +9,12 @@ import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
 import { retry } from "@/utils/try-catch";
 import { createTransferLink } from "@/utils/link";
 import { eq } from "drizzle-orm";
+import { success } from "zod/v4";
 
-export class TransferWithLink extends OpenAPIRoute {
+export class TransferWithKaiapayId extends OpenAPIRoute {
   schema = {
     tags: ["Transaction"],
-    summary: "Transfer with Link",
+    summary: "Transfer with Kaia ID",
     request: {
       body: {
         content: {
@@ -21,7 +22,7 @@ export class TransferWithLink extends OpenAPIRoute {
             schema: z.object({
               amount: z.string(),
               token: z.string(),
-              method: z.enum([TxnMethod.link, TxnMethod.phone]),
+              kaiapayId: z.string(),
             }),
           },
         },
@@ -38,7 +39,6 @@ export class TransferWithLink extends OpenAPIRoute {
                   success: z.literal(true),
                   result: z.object({
                     transactionId: z.string(),
-                    link: z.string(),
                     publicAddress: z.string(),
                   }),
                 }),
@@ -66,42 +66,69 @@ export class TransferWithLink extends OpenAPIRoute {
 
   async handle(c: AppContext) {
     const data = await this.getValidatedData<typeof this.schema>();
-    const { amount, token, method } = data.body;
+    const { amount, token, kaiapayId } = data.body;
 
-    const { url, publicAddress } = await createTransferLink({
-      baseUrl: c.env.LINK_BASE_URL,
-    });
-
-    const user = await c.get("privy").getUserById(c.get("userId"));
-
-    if (!user.smartWallet?.address) {
-      throw new Error("Smart wallet not found");
-    }
-
-    const userRecord = (
+    // kaiapayId 로 사용자 조회
+    const receivingUser = (
       await c
         .get("db")
         .select()
         .from(users)
-        .where(eq(users.id, user.id))
+        .where(eq(users.kaiapayId, kaiapayId))
         .limit(1)
     ).at(0);
+
+    if (!receivingUser) {
+      return {
+        success: false,
+        error: "Kaiapay ID not found",
+      };
+    }
+
+    const sendingUser = (
+      await c
+        .get("db")
+        .select()
+        .from(users)
+        .where(eq(users.id, c.get("userId")))
+        .limit(1)
+    ).at(0);
+
+    const sendingPrivyUser = await c.get("privy").getUserById(c.get("userId"));
+    const receivingPrivyUser = await c
+      .get("privy")
+      .getUserById(receivingUser.id);
+
+    if (!receivingPrivyUser.smartWallet?.address) {
+      return {
+        success: false,
+        error: "Receiving user smart wallet not found",
+      };
+    }
+
+    if (!sendingPrivyUser.smartWallet?.address) {
+      return {
+        success: false,
+        error: "Sending user smart wallet not found",
+      };
+    }
 
     const transaction = await c
       .get("db")
       .insert(transactions)
       .values({
-        fromAddress: user.smartWallet.address,
-        toAddress: publicAddress,
+        fromAddress: sendingPrivyUser.smartWallet.address,
+        toAddress: receivingPrivyUser.smartWallet.address,
         token: token as `0x${string}`,
         amount: amount.toString(),
         txHash: null,
         deadline: null, // TODO: 만료 시간 일괄 설정
         status: TxnStatus.pending,
-        method: method,
-        kind: TxnKind.send_to_temporal,
-        canCancel: true,
-        senderAlias: userRecord?.kaiapayId,
+        method: TxnMethod.kaiapayId,
+        kind: TxnKind.send_to_user,
+        canCancel: false,
+        senderAlias: sendingUser?.kaiapayId,
+        recipientAlias: receivingUser.kaiapayId,
       })
       .returning()
       .then((res) => res.at(0));
@@ -117,8 +144,7 @@ export class TransferWithLink extends OpenAPIRoute {
       success: true,
       result: {
         transactionId: transaction.id,
-        link: url,
-        publicAddress,
+        publicAddress: receivingPrivyUser.smartWallet.address,
       },
     };
   }

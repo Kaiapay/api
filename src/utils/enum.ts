@@ -15,7 +15,7 @@ export enum TxnKind {
 
 export enum TxnMethod {
   link = "link",
-  id = "id", // kaiapay id
+  kaiapayId = "kaiapayId", // kaiapay id
   phone = "phone",
   wallet = "wallet",
   luckybox = "luckybox",
