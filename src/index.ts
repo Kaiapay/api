@@ -71,10 +71,6 @@ api.use("*", async (c, next) => {
   return next();
 });
 
-api.get("/api/health", (c) =>
-  c.json({ status: "ok", timestamp: new Date().toISOString() })
-);
-
 api.use("/api/*", requireAuth);
 
 api.route("/api/user", userRoutes);
