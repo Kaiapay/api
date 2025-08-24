@@ -30,20 +30,31 @@ export class TransferWithLink extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: z.object({
-              series: z.discriminatedUnion("success", [
-                z.object({
-                  success: z.literal(true),
-                  result: z.object({
-                    transactionId: z.string(),
-                    link: z.string(),
-                    publicAddress: z.string(),
-                  }),
-                }),
-                z.object({
-                  success: z.literal(false),
-                  error: z.string(),
-                }),
-              ]),
+              transactionId: z.string(),
+              link: z.string(),
+              publicAddress: z.string(),
+            }),
+          },
+        },
+      },
+      "400": {
+        description: "Bad request",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "500": {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
             }),
           },
         },
@@ -65,61 +76,80 @@ export class TransferWithLink extends OpenAPIRoute {
     const data = await this.getValidatedData<typeof this.schema>();
     const { amount, token, method, phone } = data.body;
 
-    const { url, publicAddress } = await createTransferLink({
-      baseUrl: c.env.LINK_BASE_URL,
-    });
+    try {
+      const sendingUser = (
+        await c
+          .get("db")
+          .select()
+          .from(users)
+          .where(eq(users.id, c.get("userId")))
+          .limit(1)
+      ).at(0);
 
-    const user = await c.get("privy").getUserById(c.get("userId"));
+      const sendingPrivyUser = await c
+        .get("privy")
+        .getUserById(c.get("userId"));
 
-    if (!user.smartWallet?.address) {
-      throw new Error("Smart wallet not found");
-    }
+      if (!sendingPrivyUser.smartWallet?.address) {
+        return c.json(
+          {
+            code: "WALLET_NOT_FOUND",
+            message: "Sending user smart wallet not found",
+          },
+          400
+        );
+      }
 
-    const userRecord = (
-      await c
+      const link = await createTransferLink({
+        baseUrl: c.env.LINK_BASE_URL,
+      });
+
+      const transaction = await c
         .get("db")
-        .select()
-        .from(users)
-        .where(eq(users.id, user.id))
-        .limit(1)
-    ).at(0);
+        .insert(transactions)
+        .values({
+          fromAddress: sendingPrivyUser.smartWallet.address,
+          toAddress: link.publicAddress,
+          token: token as `0x${string}`,
+          amount: amount.toString(),
+          txHash: null,
+          deadline: null, // TODO: 만료 시간 일괄 설정
+          status: TxnStatus.pending,
+          method: method,
+          kind: TxnKind.send_to_temporal,
+          canCancel: true,
+          senderAlias: sendingUser?.kaiapayId,
+          recipientAlias: phone
+            ? phone.slice(0, -4).replace(/./g, "*") + phone.slice(-4)
+            : null,
+        })
+        .returning()
+        .then((res) => res.at(0));
 
-    const transaction = await c
-      .get("db")
-      .insert(transactions)
-      .values({
-        fromAddress: user.smartWallet.address,
-        toAddress: publicAddress,
-        token: token as `0x${string}`,
-        amount: amount.toString(),
-        txHash: null,
-        deadline: null, // TODO: 만료 시간 일괄 설정
-        status: TxnStatus.pending,
-        method: method,
-        kind: TxnKind.send_to_temporal,
-        canCancel: true,
-        senderAlias: userRecord?.kaiapayId,
-        recipientAlias: phone
-          ? phone.slice(0, -4).replace(/./g, "*") + phone.slice(-4)
-          : null,
-      })
-      .returning()
-      .then((res) => res.at(0));
+      if (!transaction) {
+        return c.json(
+          {
+            code: "TRANSACTION_CREATION_FAILED",
+            message: "Failed to create transaction",
+          },
+          500
+        );
+      }
 
-    if (!transaction) {
-      return {
-        success: false,
-        error: "Transaction not found",
-      };
-    }
-
-    return {
-      success: true,
-      result: {
+      return c.json({
         transactionId: transaction.id,
-        link: url,
-        publicAddress,
-      },
-    };
+        link: link,
+        publicAddress: sendingPrivyUser.smartWallet.address,
+      });
+    } catch (error) {
+      return c.json(
+        {
+          code: "INTERNAL_ERROR",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        },
+        500
+      );
+    }
   }
 }

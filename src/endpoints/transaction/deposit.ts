@@ -25,19 +25,33 @@ export class Deposit extends OpenAPIRoute {
     },
     responses: {
       "200": {
-        description: "Returns the created transaction",
+        description: "Deposit processed successfully",
         content: {
           "application/json": {
             schema: z.object({
-              series: z.discriminatedUnion("success", [
-                z.object({
-                  success: z.literal(true),
-                }),
-                z.object({
-                  success: z.literal(false),
-                  error: z.string(),
-                }),
-              ]),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "400": {
+        description: "Bad request",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "500": {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
             }),
           },
         },
@@ -59,54 +73,70 @@ export class Deposit extends OpenAPIRoute {
     const data = await this.getValidatedData<typeof this.schema>();
     const txHash = data.body.txHash;
 
-    const tx = await retry(() =>
-      publicClient.getTransactionReceipt({
-        hash: txHash as `0x${string}`,
-      })
-    );
+    try {
+      const tx = await retry(() =>
+        publicClient.getTransactionReceipt({
+          hash: txHash as `0x${string}`,
+        })
+      );
 
-    if (tx.error) {
-      return {
-        success: false,
-        error: tx.error.message,
-      };
-    }
+      if (tx.error) {
+        return c.json(
+          {
+            code: "TRANSACTION_FETCH_ERROR",
+            message: tx.error.message,
+          },
+          400
+        );
+      }
 
-    const log = parseEventLogs({
-      abi,
-      logs: tx.data.logs,
-      strict: true,
-      eventName: "TokenDeposited",
-    }).at(0);
+      const log = parseEventLogs({
+        abi,
+        logs: tx.data.logs,
+        strict: true,
+        eventName: "TokenDeposited",
+      }).at(0);
 
-    if (!log) {
-      return {
-        success: false,
-        error: "TokenDeposited event not found in transaction",
-      };
-    }
+      if (!log) {
+        return c.json(
+          {
+            code: "EVENT_NOT_FOUND",
+            message: "TokenDeposited event not found in transaction",
+          },
+          400
+        );
+      }
 
-    await c
-      .get("db")
-      .insert(transactions)
-      .values({
-        fromAddress: log.args.from,
-        toAddress: log.args.to,
-        token: log.args.token,
-        amount: log.args.amount.toString(),
-        txHash: txHash,
-        status: TxnStatus.success,
-        method: TxnMethod.wallet,
-        kind: TxnKind.deposit,
-        canCancel: false,
-      })
-      .onConflictDoNothing({
-        target: [transactions.txHash],
+      await c
+        .get("db")
+        .insert(transactions)
+        .values({
+          fromAddress: log.args.from,
+          toAddress: log.args.to,
+          token: log.args.token,
+          amount: log.args.amount.toString(),
+          txHash: txHash,
+          status: TxnStatus.success,
+          method: TxnMethod.wallet,
+          kind: TxnKind.deposit,
+          canCancel: false,
+        })
+        .onConflictDoNothing({
+          target: [transactions.txHash],
+        });
+
+      return c.json({
+        message: "Deposit processed successfully",
       });
-
-    return {
-      success: true,
-      result: {},
-    };
+    } catch (error) {
+      return c.json(
+        {
+          code: "INTERNAL_ERROR",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        },
+        500
+      );
+    }
   }
 }

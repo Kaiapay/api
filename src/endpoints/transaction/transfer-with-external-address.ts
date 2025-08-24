@@ -28,18 +28,29 @@ export class TransferWithExternalAddress extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: z.object({
-              series: z.discriminatedUnion("success", [
-                z.object({
-                  success: z.literal(true),
-                  result: z.object({
-                    transactionId: z.string(),
-                  }),
-                }),
-                z.object({
-                  success: z.literal(false),
-                  error: z.string(),
-                }),
-              ]),
+              transactionId: z.string(),
+            }),
+          },
+        },
+      },
+      "400": {
+        description: "Bad request",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "500": {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
             }),
           },
         },
@@ -61,52 +72,72 @@ export class TransferWithExternalAddress extends OpenAPIRoute {
     const data = await this.getValidatedData<typeof this.schema>();
     const { amount, token, address } = data.body;
 
-    const user = await c.get("privy").getUserById(c.get("userId"));
+    try {
+      const sendingUser = (
+        await c
+          .get("db")
+          .select()
+          .from(users)
+          .where(eq(users.id, c.get("userId")))
+          .limit(1)
+      ).at(0);
 
-    if (!user.smartWallet?.address) {
-      throw new Error("Smart wallet not found");
-    }
+      const sendingPrivyUser = await c
+        .get("privy")
+        .getUserById(c.get("userId"));
 
-    const userRecord = (
-      await c
+      if (!sendingPrivyUser.smartWallet?.address) {
+        return c.json(
+          {
+            code: "WALLET_NOT_FOUND",
+            message: "Sending user smart wallet not found",
+          },
+          400
+        );
+      }
+
+      const transaction = await c
         .get("db")
-        .select()
-        .from(users)
-        .where(eq(users.id, user.id))
-        .limit(1)
-    ).at(0);
+        .insert(transactions)
+        .values({
+          fromAddress: sendingPrivyUser.smartWallet.address,
+          toAddress: address as `0x${string}`,
+          token: token as `0x${string}`,
+          amount: amount.toString(),
+          txHash: null,
+          deadline: null, // TODO: 만료 시간 일괄 설정
+          status: TxnStatus.pending,
+          method: TxnMethod.wallet,
+          kind: TxnKind.send_to_user,
+          canCancel: false,
+          senderAlias: sendingUser?.kaiapayId,
+          recipientAlias: null,
+        })
+        .returning()
+        .then((res) => res.at(0));
 
-    const transaction = await c
-      .get("db")
-      .insert(transactions)
-      .values({
-        fromAddress: user.smartWallet.address,
-        toAddress: address,
-        token: token as `0x${string}`,
-        amount: amount.toString(),
-        txHash: null,
-        deadline: null,
-        status: TxnStatus.pending,
-        method: TxnMethod.wallet,
-        kind: TxnKind.withdraw,
-        canCancel: false,
-        senderAlias: userRecord?.kaiapayId,
-      })
-      .returning()
-      .then((res) => res.at(0));
+      if (!transaction) {
+        return c.json(
+          {
+            code: "TRANSACTION_CREATION_FAILED",
+            message: "Failed to create transaction",
+          },
+          500
+        );
+      }
 
-    if (!transaction) {
-      return {
-        success: false,
-        error: "Transaction not found",
-      };
-    }
-
-    return {
-      success: true,
-      result: {
+      return c.json({
         transactionId: transaction.id,
-      },
-    };
+      });
+    } catch (error) {
+      return c.json(
+        {
+          code: "INTERNAL_ERROR",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        },
+        500
+      );
+    }
   }
 }

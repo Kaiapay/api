@@ -28,19 +28,41 @@ export class TransferWithKaiapayId extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: z.object({
-              series: z.discriminatedUnion("success", [
-                z.object({
-                  success: z.literal(true),
-                  result: z.object({
-                    transactionId: z.string(),
-                    publicAddress: z.string(),
-                  }),
-                }),
-                z.object({
-                  success: z.literal(false),
-                  error: z.string(),
-                }),
-              ]),
+              transactionId: z.string(),
+              publicAddress: z.string(),
+            }),
+          },
+        },
+      },
+      "400": {
+        description: "Bad request",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "404": {
+        description: "User not found",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "500": {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
             }),
           },
         },
@@ -62,84 +84,106 @@ export class TransferWithKaiapayId extends OpenAPIRoute {
     const data = await this.getValidatedData<typeof this.schema>();
     const { amount, token, kaiapayId } = data.body;
 
-    // kaiapayId 로 사용자 조회
-    const receivingUser = (
-      await c
+    try {
+      // kaiapayId 로 사용자 조회
+      const receivingUser = (
+        await c
+          .get("db")
+          .select()
+          .from(users)
+          .where(eq(users.kaiapayId, kaiapayId))
+          .limit(1)
+      ).at(0);
+
+      if (!receivingUser) {
+        return c.json(
+          {
+            code: "USER_NOT_FOUND",
+            message: "Kaiapay ID not found",
+          },
+          404
+        );
+      }
+
+      const sendingUser = (
+        await c
+          .get("db")
+          .select()
+          .from(users)
+          .where(eq(users.id, c.get("userId")))
+          .limit(1)
+      ).at(0);
+
+      const sendingPrivyUser = await c
+        .get("privy")
+        .getUserById(c.get("userId"));
+      const receivingPrivyUser = await c
+        .get("privy")
+        .getUserById(receivingUser.id);
+
+      if (!receivingPrivyUser.smartWallet?.address) {
+        return c.json(
+          {
+            code: "WALLET_NOT_FOUND",
+            message: "Receiving user smart wallet not found",
+          },
+          400
+        );
+      }
+
+      if (!sendingPrivyUser.smartWallet?.address) {
+        return c.json(
+          {
+            code: "WALLET_NOT_FOUND",
+            message: "Sending user smart wallet not found",
+          },
+          400
+        );
+      }
+
+      const transaction = await c
         .get("db")
-        .select()
-        .from(users)
-        .where(eq(users.kaiapayId, kaiapayId))
-        .limit(1)
-    ).at(0);
+        .insert(transactions)
+        .values({
+          fromAddress: sendingPrivyUser.smartWallet.address,
+          toAddress: receivingPrivyUser.smartWallet.address,
+          token: token as `0x${string}`,
+          amount: amount.toString(),
+          txHash: null,
+          deadline: null, // TODO: 만료 시간 일괄 설정
+          status: TxnStatus.pending,
+          method: TxnMethod.kaiapayId,
+          kind: TxnKind.send_to_user,
+          canCancel: false,
+          senderAlias: sendingUser?.kaiapayId,
+          recipientAlias: receivingUser.kaiapayId,
+        })
+        .returning()
+        .then((res) => res.at(0));
 
-    if (!receivingUser) {
-      return {
-        success: false,
-        error: "Kaiapay ID not found",
-      };
-    }
+      if (!transaction) {
+        return c.json(
+          {
+            code: "TRANSACTION_CREATION_FAILED",
+            message: "Failed to create transaction",
+          },
+          500
+        );
+      }
 
-    const sendingUser = (
-      await c
-        .get("db")
-        .select()
-        .from(users)
-        .where(eq(users.id, c.get("userId")))
-        .limit(1)
-    ).at(0);
-
-    const sendingPrivyUser = await c.get("privy").getUserById(c.get("userId"));
-    const receivingPrivyUser = await c
-      .get("privy")
-      .getUserById(receivingUser.id);
-
-    if (!receivingPrivyUser.smartWallet?.address) {
-      return {
-        success: false,
-        error: "Receiving user smart wallet not found",
-      };
-    }
-
-    if (!sendingPrivyUser.smartWallet?.address) {
-      return {
-        success: false,
-        error: "Sending user smart wallet not found",
-      };
-    }
-
-    const transaction = await c
-      .get("db")
-      .insert(transactions)
-      .values({
-        fromAddress: sendingPrivyUser.smartWallet.address,
-        toAddress: receivingPrivyUser.smartWallet.address,
-        token: token as `0x${string}`,
-        amount: amount.toString(),
-        txHash: null,
-        deadline: null, // TODO: 만료 시간 일괄 설정
-        status: TxnStatus.pending,
-        method: TxnMethod.kaiapayId,
-        kind: TxnKind.send_to_user,
-        canCancel: false,
-        senderAlias: sendingUser?.kaiapayId,
-        recipientAlias: receivingUser.kaiapayId,
-      })
-      .returning()
-      .then((res) => res.at(0));
-
-    if (!transaction) {
-      return {
-        success: false,
-        error: "Transaction not found",
-      };
-    }
-
-    return {
-      success: true,
-      result: {
+      return c.json({
         transactionId: transaction.id,
         publicAddress: receivingPrivyUser.smartWallet.address,
-      },
-    };
+      });
+    } catch (error) {
+      return c.json(
+        {
+          code: "INTERNAL_ERROR",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        },
+        500
+      );
+    }
   }
 }

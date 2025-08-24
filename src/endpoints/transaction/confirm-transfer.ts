@@ -27,19 +27,44 @@ export class ConfirmTransfer extends OpenAPIRoute {
     },
     responses: {
       "200": {
-        description: "Returns the created transaction",
+        description: "Transfer confirmed successfully",
         content: {
           "application/json": {
             schema: z.object({
-              series: z.discriminatedUnion("success", [
-                z.object({
-                  success: z.literal(true),
-                }),
-                z.object({
-                  success: z.literal(false),
-                  error: z.string(),
-                }),
-              ]),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "400": {
+        description: "Bad request",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "404": {
+        description: "Transaction not found",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "500": {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
             }),
           },
         },
@@ -61,90 +86,111 @@ export class ConfirmTransfer extends OpenAPIRoute {
     const data = await this.getValidatedData<typeof this.schema>();
     const { transactionId, txHash } = data.body;
 
-    const tx = await retry(() =>
-      publicClient.getTransactionReceipt({
-        hash: txHash as `0x${string}`,
-      })
-    );
-
-    if (tx.error) {
-      return {
-        success: false,
-        error: tx.error.message,
-      };
-    }
-
-    const log = parseEventLogs({
-      abi,
-      logs: tx.data.logs,
-      strict: true,
-      eventName: "TokenTransferred",
-    }).at(0);
-
-    if (!log) {
-      return {
-        success: false,
-        error: "TokenTransferred event not found in transaction",
-      };
-    }
-
-    const result = await tryCatch(
-      async () =>
-        await c.get("db").transaction(async (tx) => {
-          // get current transaction
-          const transaction = await tx
-            .select()
-            .from(transactions)
-            .where(eq(transactions.id, transactionId))
-            .limit(1)
-            .then((res) => res.at(0));
-
-          if (!transaction) {
-            throw new Error("Transaction not found");
-          }
-
-          // check values
-          if (log.args.amount.toString() !== transaction.amount) {
-            throw new Error("AMOUNT_MISMATCH");
-          }
-          if (log.args.token !== transaction.token) {
-            throw new Error("TOKEN_MISMATCH");
-          }
-          if (log.args.from !== transaction.fromAddress) {
-            throw new Error("FROM_ADDRESS_MISMATCH");
-          }
-          if (log.args.to !== transaction.toAddress) {
-            throw new Error("TO_ADDRESS_MISMATCH");
-          }
-
-          // update transaction
-          await tx
-            .update(transactions)
-            .set({
-              txHash: txHash,
-              status: TxnStatus.success,
-            })
-            .where(eq(transactions.id, transactionId));
+    try {
+      const tx = await retry(() =>
+        publicClient.getTransactionReceipt({
+          hash: txHash as `0x${string}`,
         })
-    );
+      );
 
-    if (result.error) {
-      await c
-        .get("db")
-        .update(transactions)
-        .set({
-          txHash: txHash,
-          status: TxnStatus.failed,
-        })
-        .where(eq(transactions.id, transactionId));
-      return {
-        success: false,
-        error: result.error.message,
-      };
+      if (tx.error) {
+        return c.json(
+          {
+            code: "TRANSACTION_FETCH_ERROR",
+            message: tx.error.message,
+          },
+          400
+        );
+      }
+
+      const log = parseEventLogs({
+        abi,
+        logs: tx.data.logs,
+        strict: true,
+        eventName: "TokenTransferred",
+      }).at(0);
+
+      if (!log) {
+        return c.json(
+          {
+            code: "EVENT_NOT_FOUND",
+            message: "TokenTransferred event not found in transaction",
+          },
+          400
+        );
+      }
+
+      const result = await tryCatch(
+        async () =>
+          await c.get("db").transaction(async (tx) => {
+            // get current transaction
+            const transaction = await tx
+              .select()
+              .from(transactions)
+              .where(eq(transactions.id, transactionId))
+              .limit(1)
+              .then((res) => res.at(0));
+
+            if (!transaction) {
+              throw new Error("Transaction not found");
+            }
+
+            // check values
+            if (log.args.amount.toString() !== transaction.amount) {
+              throw new Error("AMOUNT_MISMATCH");
+            }
+            if (log.args.token !== transaction.token) {
+              throw new Error("TOKEN_MISMATCH");
+            }
+            if (log.args.from !== transaction.fromAddress) {
+              throw new Error("FROM_ADDRESS_MISMATCH");
+            }
+            if (log.args.to !== transaction.toAddress) {
+              throw new Error("TO_ADDRESS_MISMATCH");
+            }
+
+            // update transaction
+            await tx
+              .update(transactions)
+              .set({
+                txHash: txHash,
+                status: TxnStatus.success,
+              })
+              .where(eq(transactions.id, transactionId));
+          })
+      );
+
+      if (result.error) {
+        if (result.error.message === "Transaction not found") {
+          return c.json(
+            {
+              code: "TRANSACTION_NOT_FOUND",
+              message: result.error.message,
+            },
+            404
+          );
+        }
+        return c.json(
+          {
+            code: "VALIDATION_ERROR",
+            message: result.error.message,
+          },
+          400
+        );
+      }
+
+      return c.json({
+        message: "Transfer confirmed successfully",
+      });
+    } catch (error) {
+      return c.json(
+        {
+          code: "INTERNAL_ERROR",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        },
+        500
+      );
     }
-
-    return {
-      success: true,
-    };
   }
 }

@@ -29,22 +29,44 @@ export class UpdateKaiapayId extends OpenAPIRoute {
     },
     responses: {
       "200": {
-        description: "Returns the created task",
+        description: "Kaiapay ID updated successfully",
         content: {
           "application/json": {
             schema: z.object({
-              series: z.discriminatedUnion("success", [
-                z.object({
-                  success: z.literal(true),
-                  result: z.object({
-                    kaiapayId: z.string(),
-                  }),
-                }),
-                z.object({
-                  success: z.literal(false),
-                  error: z.string(),
-                }),
-              ]),
+              kaiapayId: z.string(),
+            }),
+          },
+        },
+      },
+      "400": {
+        description: "Bad request",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "409": {
+        description: "Conflict - Kaiapay ID already exists",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "500": {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: z.object({
+              code: z.string(),
+              message: z.string(),
             }),
           },
         },
@@ -64,51 +86,63 @@ export class UpdateKaiapayId extends OpenAPIRoute {
 
   async handle(c: AppContext) {
     const data = await this.getValidatedData<typeof this.schema>();
-    const kaiapayId = data.body.kaiapayId;
+    const { kaiapayId } = data.body;
 
-    const updateKaiapayIdResult = await tryCatch(
-      async () =>
-        await c.get("db").transaction(async (tx) => {
-          // 중복 검사 먼저
-          const existingUser = await tx.query.users.findFirst({
-            where: eq(users.kaiapayId, kaiapayId),
-          });
+    try {
+      const result = await tryCatch(async () => {
+        const existingUser = await c
+          .get("db")
+          .select()
+          .from(users)
+          .where(eq(users.kaiapayId, kaiapayId))
+          .limit(1);
 
-          if (existingUser) {
-            throw new Error("DUPLICATE_KAIAPAY_ID");
-          }
+        if (existingUser.length > 0) {
+          throw new Error("Kaiapay ID already exists");
+        }
 
-          await tx
-            .insert(users)
-            .values({ kaiapayId, id: c.get("userId") })
-            .onConflictDoUpdate({
-              target: users.id,
-              set: { kaiapayId },
-            });
-        })
-    );
+        await c
+          .get("db")
+          .update(users)
+          .set({
+            kaiapayId: kaiapayId,
+          })
+          .where(eq(users.id, c.get("userId")));
 
-    if (updateKaiapayIdResult.error) {
-      switch (updateKaiapayIdResult.error.message) {
-        case "DUPLICATE_KAIAPAY_ID":
-          return {
-            success: false,
-            error: "이미 사용중인 카이아페이 아이디입니다",
-          };
-        default:
-          console.error(updateKaiapayIdResult.error);
-          return {
-            success: false,
-            error: "알 수 없는 오류가 발생했습니다",
-          };
+        return kaiapayId;
+      });
+
+      if (result.error) {
+        if (result.error.message === "Kaiapay ID already exists") {
+          return c.json(
+            {
+              code: "KAIA_ID_ALREADY_EXISTS",
+              message: result.error.message,
+            },
+            409
+          );
+        }
+        return c.json(
+          {
+            code: "UPDATE_FAILED",
+            message: result.error.message,
+          },
+          400
+        );
       }
-    }
 
-    return {
-      success: true,
-      result: {
-        kaiapayId,
-      },
-    };
+      return c.json({
+        kaiapayId: result.data,
+      });
+    } catch (error) {
+      return c.json(
+        {
+          code: "INTERNAL_ERROR",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        },
+        500
+      );
+    }
   }
 }
