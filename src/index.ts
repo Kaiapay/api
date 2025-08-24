@@ -9,6 +9,7 @@ import { PrivyClient } from "@privy-io/server-auth";
 import userRoutes from "./endpoints/user";
 import transactionRoutes from "./endpoints/transaction";
 import scalar from "./utils/scalar";
+import paymentRoutes from "./endpoints/payment";
 
 const app = new Hono<ContextType>();
 
@@ -54,5 +55,6 @@ api.use("/api/*", requireAuth);
 
 api.route("/api/user", userRoutes);
 api.route("/api/transaction", transactionRoutes);
+api.route("/api/payment", paymentRoutes);
 
 export default app;

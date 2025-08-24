@@ -1,0 +1,1 @@
+ALTER TABLE "payments" ALTER COLUMN "receiver_user_id" SET NOT NULL;

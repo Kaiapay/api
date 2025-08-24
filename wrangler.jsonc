@@ -27,9 +27,15 @@
       "localConnectionString": "postgresql://postgres.kmgmjuyytlqmxrtfimwf:prCUfz1puR3WKAEi@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres"
     }
   ],
+  "vars": {
+    "LINK_BASE_URL": "http://localhost:3000"
+  },
   "env": {
     "development": {
       "name": "kaiapay-server-dev",
+      "vars": {
+        "LINK_BASE_URL": "https://dev-link.kaiapay.app"
+      },
       "hyperdrive": [
         {
           "id": "fee8987854e04f00affc2cb92aa64142",
@@ -58,6 +64,9 @@
     },
     "production": {
       "name": "kaiapay-server-prod",
+      "vars": {
+        "LINK_BASE_URL": "https://link.kaiapay.app"
+      },
       "hyperdrive": [
         {
           "id": "a21e6ec2b1a14a038c1b23e93a718e93",

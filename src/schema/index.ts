@@ -73,7 +73,7 @@ export const payments = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
   code: varchar("code", { length: 15 }).notNull().unique(), // 8pL1aB9xQm7Ez5N
 
-  receiverUserId: text("receiver_user_id"), // privy id
+  receiverUserId: text("receiver_user_id").notNull(), // privy id
 
   title: text("title").notNull(),
   // currency 와 amount 는 최초 생성시 설정되며 변경 불가
