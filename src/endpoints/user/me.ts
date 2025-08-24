@@ -2,12 +2,14 @@ import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "@/types";
 import { User } from "@privy-io/server-auth";
+import { users } from "@/schema";
+import { eq } from "drizzle-orm";
 
 const UserSchema = z.custom<User>((val) => val as User);
 
-export class AuthMe extends OpenAPIRoute {
+export class UserMe extends OpenAPIRoute {
   schema = {
-    tags: ["Auth"],
+    tags: ["User"],
     summary: "Get current user",
     security: [{ cookie: [] }],
     responses: {
@@ -37,8 +39,15 @@ export class AuthMe extends OpenAPIRoute {
   async handle(c: AppContext) {
     const userId = c.get("userId");
 
-    const user = await c.get("privy").getUserById(userId);
+    const privyUser = await c.get("privy").getUserById(userId);
 
-    return user;
+    const user = await c.get("db").query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    return {
+      privyUser,
+      user,
+    };
   }
 }

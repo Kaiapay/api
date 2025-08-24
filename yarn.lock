@@ -1539,6 +1539,7 @@ __metadata:
     drizzle-orm: "npm:^0.44.4"
     hono: "npm:^4.6.20"
     postgres: "npm:^3.4.7"
+    viem: "npm:^2.34.0"
     wrangler: "npm:^4.31.0"
     zod: "npm:^3.24.1"
   languageName: unknown
@@ -3316,7 +3317,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"viem@npm:^2":
+"viem@npm:^2, viem@npm:^2.34.0":
   version: 2.34.0
   resolution: "viem@npm:2.34.0"
   dependencies:
