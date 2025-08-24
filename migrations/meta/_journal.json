@@ -15,6 +15,13 @@
       "when": 1756025648261,
       "tag": "20250824085408_condemned_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1756037416163,
+      "tag": "20250824121016_lyrical_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

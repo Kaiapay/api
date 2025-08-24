@@ -7,6 +7,7 @@ import {
   uuid,
   numeric,
   varchar,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -21,48 +22,52 @@ export const users = pgTable("users", {
     .notNull(),
 });
 
-export const transactions = pgTable("transactions", {
-  id: uuid("id").primaryKey().defaultRandom(),
+export const transactions = pgTable(
+  "transactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
 
-  fromAddress: text("from_address").notNull(),
-  toAddress: text("to_address").notNull(),
+    fromAddress: text("from_address").notNull(),
+    toAddress: text("to_address").notNull(),
 
-  currency: text("currency").$type<Currency>().notNull(),
-  amount: numeric("amount", {
-    mode: "string",
-    precision: 38,
-    scale: 0,
-  }).notNull(),
+    token: text("token").$type<`0x${string}`>().notNull(),
+    amount: numeric("amount", {
+      mode: "string",
+      precision: 38,
+      scale: 0,
+    }).notNull(),
 
-  senderAlias: text("sender_alias"), // 송금자 별칭
-  recipientAlias: text("recipient_alias"), // 수신자 별칭
+    senderAlias: text("sender_alias"), // 송금자 별칭
+    recipientAlias: text("recipient_alias"), // 수신자 별칭
 
-  kind: text("kind").$type<TxnKind>().notNull(),
-  method: text("method").$type<TxnMethod>().notNull(),
-  status: text("status").$type<TxnStatus>().notNull(),
+    kind: text("kind").$type<TxnKind>().notNull(),
+    method: text("method").$type<TxnMethod>().notNull(),
+    status: text("status").$type<TxnStatus>().notNull(),
 
-  deadline: timestamp("deadline", { withTimezone: true }), // send_to_temporal 일 경우 설정
+    deadline: timestamp("deadline", { withTimezone: true }), // send_to_temporal 일 경우 설정
 
-  // temporal pot에 보내는 경우 true
-  // 상대방이 받았을 경우 false로 업데이트됨
-  canCancel: boolean("can_cancel").notNull().default(false),
+    // temporal pot에 보내는 경우 true
+    // 상대방이 받았을 경우 false로 업데이트됨
+    canCancel: boolean("can_cancel").notNull().default(false),
 
-  txHash: varchar("tx_hash", { length: 80 }),
+    txHash: varchar("tx_hash", { length: 80 }),
 
-  // UI용 상태 텍스트/메모
-  memo: varchar("memo", { length: 200 }),
+    // UI용 상태 텍스트/메모
+    memo: varchar("memo", { length: 200 }),
 
-  paymentId: uuid("payment_id").references(() => payments.id, {
-    onDelete: "set null",
-  }),
+    paymentId: uuid("payment_id").references(() => payments.id, {
+      onDelete: "set null",
+    }),
 
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [unique("tx_hash_unique").on(t.txHash)]
+);
 
 export const payments = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
