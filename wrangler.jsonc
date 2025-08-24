@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "kaiapay-server-dev",
+  "name": "kaiapay-server",
   "account_id": "6377196122dd8a0ce3a9b3ef18fdfdd7",
   "main": "src/index.ts",
   "compatibility_flags": ["nodejs_compat"],
@@ -28,12 +28,35 @@
     }
   ],
   "env": {
+    "development": {
+      "name": "kaiapay-server-dev",
+      "hyperdrive": [
+        {
+          "id": "fee8987854e04f00affc2cb92aa64142",
+          "binding": "DATABASE"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "**",
+          "custom_domain": true,
+          "zone_name": "dev-api.kaiapay.io"
+        }
+      ]
+    },
     "production": {
       "name": "kaiapay-server-prod",
       "hyperdrive": [
         {
           "id": "a21e6ec2b1a14a038c1b23e93a718e93",
           "binding": "DATABASE"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "**",
+          "custom_domain": true,
+          "zone_name": "api.kaiapay.io"
         }
       ]
     }
