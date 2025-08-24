@@ -28,13 +28,13 @@
     }
   ],
   "vars": {
-    "LINK_BASE_URL": "http://localhost:3000"
+    "LINK_BASE_URL": "http://localhost:5173"
   },
   "env": {
     "development": {
       "name": "kaiapay-server-dev",
       "vars": {
-        "LINK_BASE_URL": "https://dev-link.kaiapay.app"
+        "LINK_BASE_URL": "https://dev.kaiapay.app"
       },
       "hyperdrive": [
         {
@@ -65,7 +65,7 @@
     "production": {
       "name": "kaiapay-server-prod",
       "vars": {
-        "LINK_BASE_URL": "https://link.kaiapay.app"
+        "LINK_BASE_URL": "https://kaiapay.app"
       },
       "hyperdrive": [
         {
