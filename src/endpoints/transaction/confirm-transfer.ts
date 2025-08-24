@@ -5,7 +5,7 @@ import { parseEventLogs } from "viem";
 import { publicClient } from "@/utils/viem";
 import { abi } from "@/utils/abi";
 import { transactions } from "@/schema";
-import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
+import { TxnStatus } from "@/utils/enum";
 import { retry, tryCatch } from "@/utils/try-catch";
 import { eq } from "drizzle-orm";
 

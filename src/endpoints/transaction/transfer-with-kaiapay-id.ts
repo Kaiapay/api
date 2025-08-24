@@ -1,15 +1,9 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "@/types";
-import { parseEventLogs } from "viem";
-import { publicClient } from "@/utils/viem";
-import { abi } from "@/utils/abi";
 import { transactions, users } from "@/schema";
 import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
-import { retry } from "@/utils/try-catch";
-import { createTransferLink } from "@/utils/link";
 import { eq } from "drizzle-orm";
-import { success } from "zod/v4";
 
 export class TransferWithKaiapayId extends OpenAPIRoute {
   schema = {

@@ -51,6 +51,7 @@ export const transactions = pgTable(
     canCancel: boolean("can_cancel").notNull().default(false),
 
     txHash: varchar("tx_hash", { length: 80 }),
+    cancelTxHash: varchar("cancel_tx_hash", { length: 80 }),
 
     // UI용 상태 텍스트/메모
     memo: varchar("memo", { length: 200 }),

@@ -1,12 +1,8 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "@/types";
-import { parseEventLogs } from "viem";
-import { publicClient } from "@/utils/viem";
-import { abi } from "@/utils/abi";
 import { transactions, users } from "@/schema";
 import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
-import { retry } from "@/utils/try-catch";
 import { createTransferLink } from "@/utils/link";
 import { eq } from "drizzle-orm";
 
@@ -22,6 +18,7 @@ export class TransferWithLink extends OpenAPIRoute {
               amount: z.string(),
               token: z.string(),
               method: z.enum([TxnMethod.link, TxnMethod.phone]),
+              phone: z.string().optional(),
             }),
           },
         },
@@ -66,7 +63,7 @@ export class TransferWithLink extends OpenAPIRoute {
 
   async handle(c: AppContext) {
     const data = await this.getValidatedData<typeof this.schema>();
-    const { amount, token, method } = data.body;
+    const { amount, token, method, phone } = data.body;
 
     const { url, publicAddress } = await createTransferLink({
       baseUrl: c.env.LINK_BASE_URL,
@@ -102,6 +99,9 @@ export class TransferWithLink extends OpenAPIRoute {
         kind: TxnKind.send_to_temporal,
         canCancel: true,
         senderAlias: userRecord?.kaiapayId,
+        recipientAlias: phone
+          ? phone.slice(0, -4).replace(/./g, "*") + phone.slice(-4)
+          : null,
       })
       .returning()
       .then((res) => res.at(0));
