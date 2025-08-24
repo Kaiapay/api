@@ -7,6 +7,8 @@ import { TransferWithLink } from "./transfer-with-link";
 import { TransferWithKaiapayId } from "./transfer-with-kaiapay-id";
 import { ConfirmTransfer } from "./confirm-transfer";
 import { TransferWithExternalAddress } from "./transfer-with-external-address";
+import { TransactionGetById } from "./get-by-id";
+import { TransactionGetByToAddress } from "./get-by-to-address";
 
 const transactionRoutes = fromHono(new Hono<ContextType>());
 
@@ -18,5 +20,7 @@ transactionRoutes.post(
   "/transfer-with-external-address",
   TransferWithExternalAddress
 );
+transactionRoutes.get("/to-address", TransactionGetByToAddress);
+transactionRoutes.get("/:id", TransactionGetById);
 
 export default transactionRoutes;
