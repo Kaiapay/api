@@ -24,6 +24,7 @@ export class GetPaymentByCode extends OpenAPIRoute {
                 title: z.string(),
                 amount: z.string().optional(),
                 currency: z.string().optional(),
+                receiverAddress: z.string(),
               }),
             }),
           },
@@ -54,12 +55,19 @@ export class GetPaymentByCode extends OpenAPIRoute {
       throw new Error("Payment not found");
     }
 
+    const privyUser = await c.get("privy").getUserById(payment.receiverUserId);
+
+    if (!privyUser.smartWallet?.address) {
+      throw new Error("Receiver address not found");
+    }
+
     return {
       payment: {
         code: payment.code,
         title: payment.title,
         amount: payment.amount,
         currency: payment.currency,
+        receiverAddress: privyUser.smartWallet.address,
       },
     };
   }

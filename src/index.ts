@@ -18,7 +18,12 @@ app.get("/", async (c) => {
   return c.html(scalar);
 });
 
-app.use("/*", cors());
+app.use(
+  "/*",
+  cors({
+    origin: "*",
+  })
+);
 
 const api = fromHono<Hono<ContextType>>(app, {
   openapi_url: "/openapi.json",

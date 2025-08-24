@@ -109,6 +109,7 @@ export default `
 		if (accessToken) {
 			// 이메일을 다시 묻지 않고, 로그인됨 UI로 전환
 			setAsLogined();
+            // await privy.embeddedWallet.create();
 		} else {
 			setAsLogouted();
 		}
@@ -123,6 +124,7 @@ export default `
 	try {
 		const { user } = await privy.auth.email.loginWithCode($email.value.trim(), $code.value.trim());
 		accessToken = await privy.getAccessToken();
+        // await privy.embeddedWallet.create(); 
 		console.log('Privy access token:', accessToken);
 		setAsLogined();
 	} catch (err) {
