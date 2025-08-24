@@ -24,20 +24,18 @@ export class RelayFeePay extends OpenAPIRoute {
         description: "Returns the relayed transaction hash",
         content: {
           "application/json": {
-            schema: z.object({
-              series: z.discriminatedUnion("success", [
-                z.object({
-                  success: z.literal(true),
-                  result: z.object({
-                    hash: z.string(),
-                  }),
+            schema: z.discriminatedUnion("success", [
+              z.object({
+                success: z.literal(true),
+                result: z.object({
+                  hash: z.string(),
                 }),
-                z.object({
-                  success: z.literal(false),
-                  error: z.string(),
-                }),
-              ]),
-            }),
+              }),
+              z.object({
+                success: z.literal(false),
+                error: z.string(),
+              }),
+            ]),
           },
         },
       },
