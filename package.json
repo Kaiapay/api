@@ -5,7 +5,7 @@
   "scripts": {
     "deploy:development": "wrangler deploy --env development",
     "deploy:production": "wrangler deploy --env production",
-    "dev": "scripts/local_secret_store_setting.sh && wrangler dev",
+    "dev": "scripts/local_secret_store_setting.sh && yarn cf-typegen && wrangler dev",
     "start": "wrangler dev",
     "cf-typegen": "wrangler types",
     "db:generate": "drizzle-kit generate",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20250823.0",
+    "@kaiachain/viem-ext": "^2.0.8",
     "@privy-io/server-auth": "^1.31.1",
     "bs58": "^6.0.0",
     "chanfana": "^2.6.3",

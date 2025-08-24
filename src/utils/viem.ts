@@ -1,4 +1,4 @@
-import { createPublicClient, http } from "viem";
+import { createPublicClient, createWalletClient, http } from "viem";
 import { kaia } from "viem/chains";
 
 export const publicClient = createPublicClient({
