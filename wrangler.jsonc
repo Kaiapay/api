@@ -50,9 +50,9 @@
       ],
       "routes": [
         {
-          "pattern": "dev-api.kaiapay.io",
+          "pattern": "dev-api.kaiapay.app",
           "custom_domain": true,
-          "zone_name": "kaiapay.io"
+          "zone_name": "kaiapay.app"
         }
       ]
     },
@@ -78,9 +78,9 @@
       ],
       "routes": [
         {
-          "pattern": "api.kaiapay.io",
+          "pattern": "api.kaiapay.app",
           "custom_domain": true,
-          "zone_name": "kaiapay.io"
+          "zone_name": "kaiapay.app"
         }
       ]
     }
