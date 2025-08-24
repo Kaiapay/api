@@ -1,4 +1,4 @@
-import { User } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/server-auth";
 import { DateTime, Str } from "chanfana";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Context } from "hono";
@@ -11,7 +11,8 @@ export type DB = ReturnType<typeof drizzle<typeof schema>>;
 
 export interface Variables {
   db: DB;
-  user: User;
+  privy: PrivyClient;
+  userId: string;
 }
 
 export interface ContextType {

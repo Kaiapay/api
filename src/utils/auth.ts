@@ -2,12 +2,7 @@ import { PrivyClient } from "@privy-io/server-auth";
 import { AppContext } from "../types";
 
 export async function requireAuth(c: AppContext, next: any) {
-  const privyAppId = await c.env.PRIVY_APP_ID.get();
-  const privyAppSecret = await c.env.PRIVY_APP_SECRET.get();
-
-  const privy = new PrivyClient(privyAppId, privyAppSecret);
   let token = null;
-
   const cookie = c.req.header("cookie");
   let tokenFromCookie = cookie
     .split(";")
@@ -24,15 +19,13 @@ export async function requireAuth(c: AppContext, next: any) {
     }
   }
 
-  const tokenClaims = await privy.verifyAuthToken(token);
+  const tokenClaims = await c.get("privy").verifyAuthToken(token);
 
   if (!tokenClaims) {
     return c.json({ error: "Unauthorized - Authentication required" }, 401);
   }
 
-  const user = await privy.getUserById(tokenClaims.userId);
-
-  c.set("user", user);
+  c.set("userId", tokenClaims.userId);
 
   await next();
 }

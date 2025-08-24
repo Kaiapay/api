@@ -10,12 +10,12 @@
   },
   "secrets_store_secrets": [
     {
-      "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+      "store_id": "local",
       "secret_name": "PRIVY_APP_ID",
       "binding": "PRIVY_APP_ID"
     },
     {
-      "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+      "store_id": "local",
       "secret_name": "PRIVY_APP_SECRET",
       "binding": "PRIVY_APP_SECRET"
     }

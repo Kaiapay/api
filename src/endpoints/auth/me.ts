@@ -35,7 +35,9 @@ export class AuthMe extends OpenAPIRoute {
   };
 
   async handle(c: AppContext) {
-    const user = c.get("user");
+    const userId = c.get("userId");
+
+    const user = await c.get("privy").getUserById(userId);
 
     return user;
   }

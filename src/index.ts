@@ -10,6 +10,7 @@ import { ContextType } from "./types";
 import * as schema from "./schema";
 import { AuthMe } from "./endpoints/auth/me";
 import { cors } from "hono/cors";
+import { PrivyClient } from "@privy-io/server-auth";
 
 // Start a Hono app
 const app = new Hono<ContextType>();
@@ -195,8 +196,11 @@ api.registry.registerComponent(
   securitySchemes.bearerAuth
 );
 
-api.use("*", (c, next) => {
+api.use("*", async (c, next) => {
   c.set("db", drizzle(c.env.DATABASE.connectionString, { schema }));
+  const privyAppId = await c.env.PRIVY_APP_ID.get();
+  const privyAppSecret = await c.env.PRIVY_APP_SECRET.get();
+  c.set("privy", new PrivyClient(privyAppId, privyAppSecret));
   return next();
 });
 
