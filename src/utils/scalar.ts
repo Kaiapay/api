@@ -18,7 +18,8 @@ export default `
 <body>
    	<script
       id="api-reference"
-      data-url="/openapi.json"></script>
+      data-url="/openapi.json"
+      data-config='{"defaultLanguage": "shell", "defaultLanguageTab": "curl"}'></script>
     <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 	 <!-- 간단 로그인 UI -->
   <div class="auth-bar">
