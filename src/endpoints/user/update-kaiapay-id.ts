@@ -91,16 +91,16 @@ export class UpdateKaiapayId extends OpenAPIRoute {
     if (updateKaiapayIdResult.error) {
       switch (updateKaiapayIdResult.error.message) {
         case "DUPLICATE_KAIAPAY_ID":
-          return c.json({
+          return {
             success: false,
             error: "이미 사용중인 카이아페이 아이디입니다",
-          });
+          };
         default:
           console.error(updateKaiapayIdResult.error);
-          return c.json({
+          return {
             success: false,
             error: "알 수 없는 오류가 발생했습니다",
-          });
+          };
       }
     }
 
