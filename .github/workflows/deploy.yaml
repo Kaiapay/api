@@ -26,11 +26,7 @@ jobs:
 
       - name: Run migrations
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            yarn db migrate
-          else
-            yarn db migrate
-          fi
+          yarn db:migrate
         env:
           DATABASE_URL: ${{ github.event_name == 'release' && secrets.PROD_DATABASE_URL || secrets.DEV_DATABASE_URL }}
 
