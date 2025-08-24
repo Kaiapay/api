@@ -24,16 +24,20 @@ export class RelayFeePay extends OpenAPIRoute {
         description: "Returns the relayed transaction hash",
         content: {
           "application/json": {
-            schema: z.discriminatedUnion("success", [
+            schema: z.object({
+              hash: z.string(),
+            }),
+          },
+        },
+      },
+      "500": {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: z.discriminatedUnion("code", [
               z.object({
-                success: z.literal(true),
-                result: z.object({
-                  hash: z.string(),
-                }),
-              }),
-              z.object({
-                success: z.literal(false),
-                error: z.string(),
+                code: z.literal("SIGN_ERROR"),
+                message: z.string(),
               }),
             ]),
           },
@@ -72,14 +76,17 @@ export class RelayFeePay extends OpenAPIRoute {
     });
 
     if (result.error) {
-      throw new Error(result.error.message);
+      return c.json(
+        {
+          code: "SIGN_ERROR",
+          message: result.error.message,
+        },
+        500
+      );
     }
 
-    return {
-      success: true,
-      result: {
-        hash: result.data,
-      },
-    };
+    return c.json({
+      hash: result.data,
+    });
   }
 }
