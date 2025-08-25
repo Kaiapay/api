@@ -31,6 +31,8 @@ export class PublicTransactionGetByToAddress extends OpenAPIRoute {
                 status: z.nativeEnum(TxnStatus),
                 method: z.nativeEnum(TxnMethod),
                 kind: z.nativeEnum(TxnKind),
+                deadline: z.string(),
+                canCancel: z.boolean(),
                 updatedAt: z.string(),
               }),
             }),
