@@ -37,6 +37,8 @@ export class TransactionList extends OpenAPIRoute {
                   canCancel: z.boolean(),
                   updatedAt: z.string(),
                   canceledAt: z.string().optional(),
+                  txHash: z.string().optional(),
+                  deadline: z.string(),
                 })
               ),
             }),
