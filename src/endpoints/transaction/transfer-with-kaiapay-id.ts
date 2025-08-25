@@ -155,8 +155,8 @@ export class TransferWithKaiapayId extends OpenAPIRoute {
           method: TxnMethod.kaiapayId,
           kind: TxnKind.send_to_user,
           canCancel: false,
-          senderAlias: sendingUser?.kaiapayId,
-          recipientAlias: receivingUser.kaiapayId,
+          senderAlias: `@${sendingUser?.kaiapayId}`,
+          recipientAlias: `@${receivingUser.kaiapayId}`,
         })
         .returning()
         .then((res) => res.at(0));

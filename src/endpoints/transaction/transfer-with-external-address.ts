@@ -111,7 +111,7 @@ export class TransferWithExternalAddress extends OpenAPIRoute {
           kind: TxnKind.send_to_user,
           canCancel: false,
           senderAlias: sendingUser?.kaiapayId,
-          recipientAlias: null,
+          recipientAlias: `${address.slice(0, 4)}...${address.slice(-4)}`,
         })
         .returning()
         .then((res) => res.at(0));
