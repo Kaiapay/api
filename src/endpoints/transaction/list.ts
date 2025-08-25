@@ -2,7 +2,7 @@ import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "@/types";
 import { transactions, users } from "@/schema";
-import { and, count, desc, eq, gte, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNull, not, or } from "drizzle-orm";
 import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
 
 export class TransactionList extends OpenAPIRoute {
@@ -68,9 +68,12 @@ export class TransactionList extends OpenAPIRoute {
     const smartWalletAddress = privyUser.smartWallet?.address;
 
     const transactionRecords = await c.get("db").query.transactions.findMany({
-      where: or(
-        eq(transactions.fromAddress, smartWalletAddress as `0x${string}`),
-        eq(transactions.toAddress, smartWalletAddress as `0x${string}`)
+      where: and(
+        or(
+          eq(transactions.fromAddress, smartWalletAddress as `0x${string}`),
+          eq(transactions.toAddress, smartWalletAddress as `0x${string}`)
+        ),
+        not(isNull(transactions.txHash))
       ),
       orderBy: [desc(transactions.createdAt)],
       limit,
@@ -88,6 +91,7 @@ export class TransactionList extends OpenAPIRoute {
             eq(transactions.fromAddress, smartWalletAddress as `0x${string}`),
             eq(transactions.toAddress, smartWalletAddress as `0x${string}`)
           ),
+          not(isNull(transactions.txHash)),
           gte(transactions.createdAt, new Date(new Date().setHours(0, 0, 0, 0)))
         )
       )
