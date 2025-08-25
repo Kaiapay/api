@@ -13,7 +13,6 @@ export const createTransferLink = async (params: {
   publicAddress: `0x${string}`;
 }> => {
   const privateKey = generatePrivateKey();
-  console.log(privateKey);
   const compressedKey = compressPrivateKey(privateKey);
   const account = privateKeyToAccount(privateKey);
 
