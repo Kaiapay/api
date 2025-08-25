@@ -1,7 +1,7 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "@/types";
-import { formatUnits, parseEventLogs } from "viem";
+import { parseEventLogs } from "viem";
 import { publicClient } from "@/utils/viem";
 import { abi } from "@/utils/abi";
 import { transactions } from "@/schema";
@@ -136,7 +136,7 @@ export class ConfirmTransfer extends OpenAPIRoute {
             }
 
             // check values
-            if (formatUnits(log.args.amount, 6) !== transaction.amount) {
+            if (log.args.amount.toString() !== transaction.amount) {
               throw new Error("AMOUNT_MISMATCH");
             }
             if (log.args.token !== transaction.token) {
