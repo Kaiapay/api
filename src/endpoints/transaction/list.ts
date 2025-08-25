@@ -82,8 +82,10 @@ export class TransactionList extends OpenAPIRoute {
       .from(transactions)
       .where(
         and(
-          eq(transactions.fromAddress, smartWalletAddress as `0x${string}`),
-          eq(transactions.toAddress, smartWalletAddress as `0x${string}`),
+          or(
+            eq(transactions.fromAddress, smartWalletAddress as `0x${string}`),
+            eq(transactions.toAddress, smartWalletAddress as `0x${string}`)
+          ),
           gte(transactions.createdAt, new Date(new Date().setHours(0, 0, 0, 0)))
         )
       )

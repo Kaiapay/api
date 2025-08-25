@@ -105,7 +105,7 @@ export class TransferWithExternalAddress extends OpenAPIRoute {
           token: token as `0x${string}`,
           amount: amount.toString(),
           txHash: null,
-          deadline: null, // TODO: 만료 시간 일괄 설정
+          deadline: null,
           status: TxnStatus.pending,
           method: TxnMethod.wallet,
           kind: TxnKind.withdraw,
