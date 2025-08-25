@@ -118,7 +118,7 @@ export class TransferWithLink extends OpenAPIRoute {
           method: method,
           kind: TxnKind.send_to_temporal,
           canCancel: true,
-          senderAlias: sendingUser?.kaiapayId,
+          senderAlias: `@${sendingUser?.kaiapayId}`,
           recipientAlias: phone ? phone.slice(-4) : null,
         })
         .returning()
