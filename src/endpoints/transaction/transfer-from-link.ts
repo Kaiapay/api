@@ -158,7 +158,7 @@ export class TransferFromLink extends OpenAPIRoute {
           toAddress: log.args.to,
           token: prevTransaction.token,
           amount: log.args.amount.toString(),
-          txHash: null,
+          txHash: txHash,
           deadline: null,
           status: TxnStatus.success,
           method: TxnMethod.link,
