@@ -101,15 +101,23 @@ export class UpdateKaiapayId extends OpenAPIRoute {
           throw new Error("Kaiapay ID already exists");
         }
 
-        await c
+        const result = await c
           .get("db")
-          .update(users)
-          .set({
+          .insert(users)
+          .values({
             kaiapayId: kaiapayId,
+            id: c.get("userId"),
           })
-          .where(eq(users.id, c.get("userId")));
+          .onConflictDoUpdate({
+            target: [users.id],
+            set: {
+              kaiapayId: kaiapayId,
+            },
+          })
+          .returning()
+          .then((res) => res.at(0));
 
-        return kaiapayId;
+        return result?.kaiapayId;
       });
 
       if (result.error) {
