@@ -63,16 +63,15 @@ export class RelayFeePay extends OpenAPIRoute {
     const result = await retry(async () => {
       const feePayerClient = c.get("feePayerClient") as KaiaWalletClient;
 
-      const feePayerSigned = await feePayerClient.signTransactionAsFeePayer(
+      const feePayerSignedTx = await feePayerClient.signTransactionAsFeePayer(
         userSignedTx
       );
-
-      const hash = await feePayerClient.request({
+      const sentFeePayerTx = await feePayerClient.request({
         method: "klay_sendRawTransaction",
-        params: [feePayerSigned],
+        params: [feePayerSignedTx],
       });
 
-      return hash;
+      return sentFeePayerTx;
     });
 
     if (result.error) {
