@@ -36,6 +36,13 @@
       "when": 1756051305369,
       "tag": "20250824160145_narrow_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1756136065034,
+      "tag": "20250825153425_yielding_nova",
+      "breakpoints": true
     }
   ]
 }

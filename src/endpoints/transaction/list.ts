@@ -36,6 +36,7 @@ export class TransactionList extends OpenAPIRoute {
                   kind: z.nativeEnum(TxnKind),
                   canCancel: z.boolean(),
                   updatedAt: z.string(),
+                  canceledAt: z.string().optional(),
                 })
               ),
             }),

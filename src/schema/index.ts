@@ -66,6 +66,7 @@ export const transactions = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
   },
   (t) => [unique("tx_hash_unique").on(t.txHash)]
 );
