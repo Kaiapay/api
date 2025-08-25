@@ -1,8 +1,8 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "@/types";
-import { users } from "@/schema";
-import { eq } from "drizzle-orm";
+import { transactions, users } from "@/schema";
+import { desc, eq, or } from "drizzle-orm";
 import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
 
 export class TransactionList extends OpenAPIRoute {
@@ -10,19 +10,18 @@ export class TransactionList extends OpenAPIRoute {
     tags: ["Transaction"],
     summary: "Get transaction list",
     security: [{ cookie: [] }],
-    request: {
-      query: z.object({
-        page: z.number().default(1),
-        limit: z.number().default(10),
-      }),
-    },
+    // request: {
+    //   query: z.object({
+    //     page: z.number().default(1),
+    //     limit: z.number().default(10),
+    //   }),
+    // },
     responses: {
       "200": {
         description: "Transaction list",
         content: {
           "application/json": {
             schema: z.object({
-              hasNext: z.boolean(),
               transactions: z.array(
                 z.object({
                   id: z.string(),
@@ -35,6 +34,7 @@ export class TransactionList extends OpenAPIRoute {
                   status: z.nativeEnum(TxnStatus),
                   method: z.nativeEnum(TxnMethod),
                   kind: z.nativeEnum(TxnKind),
+                  canCancel: z.boolean(),
                   updatedAt: z.string(),
                 })
               ),
@@ -59,14 +59,18 @@ export class TransactionList extends OpenAPIRoute {
     const userId = c.get("userId");
 
     const privyUser = await c.get("privy").getUserById(userId);
+    const smartWalletAddress = privyUser.smartWallet?.address;
 
-    const user = await c.get("db").query.users.findFirst({
-      where: eq(users.id, userId),
+    const transactionRecords = await c.get("db").query.transactions.findMany({
+      where: or(
+        eq(transactions.fromAddress, smartWalletAddress as `0x${string}`),
+        eq(transactions.toAddress, smartWalletAddress as `0x${string}`)
+      ),
+      orderBy: [desc(transactions.createdAt)],
     });
 
     return {
-      privyUser,
-      user,
+      transactions: transactionRecords,
     };
   }
 }
