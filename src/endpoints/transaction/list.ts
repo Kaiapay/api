@@ -10,12 +10,11 @@ export class TransactionList extends OpenAPIRoute {
     tags: ["Transaction"],
     summary: "Get transaction list",
     security: [{ cookie: [] }],
-    // request: {
-    //   query: z.object({
-    //     page: z.number().default(1),
-    //     limit: z.number().default(10),
-    //   }),
-    // },
+    request: {
+      query: z.object({
+        limit: z.number().optional(),
+      }),
+    },
     responses: {
       "200": {
         description: "Transaction list",
@@ -56,6 +55,9 @@ export class TransactionList extends OpenAPIRoute {
   };
 
   async handle(c: AppContext) {
+    const data = await this.getValidatedData<typeof this.schema>();
+    const { limit } = data.query;
+
     const userId = c.get("userId");
 
     const privyUser = await c.get("privy").getUserById(userId);
@@ -67,6 +69,7 @@ export class TransactionList extends OpenAPIRoute {
         eq(transactions.toAddress, smartWalletAddress as `0x${string}`)
       ),
       orderBy: [desc(transactions.createdAt)],
+      limit,
     });
 
     return {
