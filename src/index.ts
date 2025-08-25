@@ -17,6 +17,7 @@ import {
   kaia,
   http,
 } from "@kaiachain/viem-ext";
+import publicRoutes from "./endpoints/public";
 
 const app = new Hono<ContextType>();
 
@@ -72,10 +73,11 @@ api.use("*", async (c, next) => {
 });
 
 api.use("/api/*", requireAuth);
-
 api.route("/api/user", userRoutes);
 api.route("/api/transaction", transactionRoutes);
 api.route("/api/payment", paymentRoutes);
 api.route("/api/fee-delegation", feeDelegationRoutes);
+
+api.route("/public", publicRoutes);
 
 export default app;

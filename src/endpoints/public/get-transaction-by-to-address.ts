@@ -5,9 +5,9 @@ import { transactions, users } from "@/schema";
 import { eq } from "drizzle-orm";
 import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
 
-export class TransactionGetByToAddress extends OpenAPIRoute {
+export class PublicTransactionGetByToAddress extends OpenAPIRoute {
   schema = {
-    tags: ["Transaction"],
+    tags: ["Public"],
     summary: "Get transaction by to address",
     request: {
       query: z.object({
@@ -33,16 +33,6 @@ export class TransactionGetByToAddress extends OpenAPIRoute {
                 kind: z.nativeEnum(TxnKind),
                 updatedAt: z.string(),
               }),
-            }),
-          },
-        },
-      },
-      "401": {
-        description: "Unauthorized - Authentication required",
-        content: {
-          "application/json": {
-            schema: z.object({
-              error: z.string(),
             }),
           },
         },
