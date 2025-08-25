@@ -10,6 +10,7 @@ import { TransferWithExternalAddress } from "./transfer-with-external-address";
 import { TransactionGetById } from "./get-by-id";
 import { TransactionList } from "./list";
 import { TransferFromLink } from "./transfer-from-link";
+import { ConfirmWithdraw } from "./confirm-withdraw";
 
 const transactionRoutes = fromHono(new Hono<ContextType>());
 
@@ -17,6 +18,7 @@ transactionRoutes.post("/deposit", Deposit);
 transactionRoutes.post("/transfer-with-link", TransferWithLink);
 transactionRoutes.post("/transfer-with-kaiapay-id", TransferWithKaiapayId);
 transactionRoutes.post("/confirm-transfer", ConfirmTransfer);
+transactionRoutes.post("/confirm-withdraw", ConfirmWithdraw);
 transactionRoutes.post(
   "/transfer-with-external-address",
   TransferWithExternalAddress
