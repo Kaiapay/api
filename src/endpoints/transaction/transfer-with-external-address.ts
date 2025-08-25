@@ -108,7 +108,7 @@ export class TransferWithExternalAddress extends OpenAPIRoute {
           deadline: null, // TODO: 만료 시간 일괄 설정
           status: TxnStatus.pending,
           method: TxnMethod.wallet,
-          kind: TxnKind.send_to_user,
+          kind: TxnKind.withdraw,
           canCancel: false,
           senderAlias: sendingUser?.kaiapayId,
           recipientAlias: `${address.slice(0, 4)}...${address.slice(-4)}`,
