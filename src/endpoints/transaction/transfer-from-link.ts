@@ -79,6 +79,9 @@ export class TransferFromLink extends OpenAPIRoute {
     const receivingPrivyUser = await c
       .get("privy")
       .getUserById(c.get("userId"));
+    const receivingUser = await c.get("db").query.users.findFirst({
+      where: eq(users.id, c.get("userId")),
+    });
     const recevingAddress = receivingPrivyUser.smartWallet?.address;
     if (!recevingAddress) {
       return c.json(
@@ -148,6 +151,9 @@ export class TransferFromLink extends OpenAPIRoute {
         .update(transactions)
         .set({
           canCancel: false,
+          recipientAlias: receivingUser?.kaiapayId
+            ? `@${receivingUser?.kaiapayId}`
+            : undefined,
         })
         .where(eq(transactions.id, prevTransactionId));
 
