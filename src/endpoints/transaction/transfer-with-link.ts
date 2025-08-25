@@ -139,7 +139,7 @@ export class TransferWithLink extends OpenAPIRoute {
       return c.json({
         transactionId: transaction.id,
         link: link.url,
-        publicAddress: sendingPrivyUser.smartWallet.address,
+        publicAddress: link.publicAddress,
       });
     } catch (error) {
       return c.json(
