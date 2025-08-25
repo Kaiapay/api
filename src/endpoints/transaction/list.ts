@@ -2,7 +2,7 @@ import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type AppContext } from "@/types";
 import { transactions, users } from "@/schema";
-import { desc, eq, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, or } from "drizzle-orm";
 import { TxnKind, TxnMethod, TxnStatus } from "@/utils/enum";
 
 export class TransactionList extends OpenAPIRoute {
@@ -21,6 +21,7 @@ export class TransactionList extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: z.object({
+              todayCount: z.number(),
               transactions: z.array(
                 z.object({
                   id: z.string(),
@@ -72,7 +73,23 @@ export class TransactionList extends OpenAPIRoute {
       limit,
     });
 
+    const todayCount = await c
+      .get("db")
+      .select({
+        count: count().as("count"),
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.fromAddress, smartWalletAddress as `0x${string}`),
+          eq(transactions.toAddress, smartWalletAddress as `0x${string}`),
+          gte(transactions.createdAt, new Date(new Date().setHours(0, 0, 0, 0)))
+        )
+      )
+      .then((res) => res.at(0)?.count ?? 0);
+
     return {
+      todayCount,
       transactions: transactionRecords,
     };
   }
