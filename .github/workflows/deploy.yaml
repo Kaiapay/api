@@ -58,5 +58,5 @@ jobs:
           tag_name: ${{ steps.create-release-tag.outputs.tag_name }}
           name: Release ${{ steps.create-release-tag.outputs.tag_name }}
           generate_release_notes: true
-          token: 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
+          token: ${{ secrets.RELEASE_TOKEN }}
           draft: ${{ !contains(github.event.head_commit.message, 'CHECKED') }}
