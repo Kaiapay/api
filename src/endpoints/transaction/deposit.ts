@@ -120,6 +120,8 @@ export class Deposit extends OpenAPIRoute {
           method: TxnMethod.wallet,
           kind: TxnKind.deposit,
           canCancel: false,
+          senderAlias:
+            log.args.from.slice(0, 4) + "..." + log.args.from.slice(-4),
         })
         .onConflictDoNothing({
           target: [transactions.txHash],
