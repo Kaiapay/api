@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1756014595281,
+      "tag": "20250824054955_awesome_shiver_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1756025648261,
+      "tag": "20250824085408_condemned_magneto",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1756037416163,
+      "tag": "20250824121016_lyrical_golden_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1756039753053,
+      "tag": "20250824124913_quick_midnight",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1756051305369,
+      "tag": "20250824160145_narrow_chronomancer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1756136065034,
+      "tag": "20250825153425_yielding_nova",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "transactions" ADD COLUMN "cancel_tx_hash" varchar(80);

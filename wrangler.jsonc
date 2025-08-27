@@ -1,0 +1,112 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kaiapay-server",
+  "account_id": "6377196122dd8a0ce3a9b3ef18fdfdd7",
+  "main": "src/index.ts",
+  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2025-08-20",
+  "observability": {
+    "enabled": true
+  },
+  "secrets_store_secrets": [
+    {
+      "store_id": "local",
+      "secret_name": "PRIVY_APP_ID",
+      "binding": "PRIVY_APP_ID"
+    },
+    {
+      "store_id": "local",
+      "secret_name": "PRIVY_APP_SECRET",
+      "binding": "PRIVY_APP_SECRET"
+    },
+    {
+      "store_id": "local",
+      "secret_name": "FEEPAYER_PK",
+      "binding": "FEEPAYER_PK"
+    }
+  ],
+  "hyperdrive": [
+    {
+      "id": "kaiapay-database-dev",
+      "binding": "DATABASE",
+      "localConnectionString": "postgresql://postgres.kmgmjuyytlqmxrtfimwf:prCUfz1puR3WKAEi@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres"
+    }
+  ],
+  "vars": {
+    "LINK_BASE_URL": "http://localhost:5173"
+  },
+  "env": {
+    "development": {
+      "name": "kaiapay-server-dev",
+      "vars": {
+        "LINK_BASE_URL": "https://dev.kaiapay.app"
+      },
+      "hyperdrive": [
+        {
+          "id": "fee8987854e04f00affc2cb92aa64142",
+          "binding": "DATABASE"
+        }
+      ],
+      "secrets_store_secrets": [
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_ID",
+          "binding": "PRIVY_APP_ID"
+        },
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_SECRET",
+          "binding": "PRIVY_APP_SECRET"
+        },
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "FEEPAYER_PK",
+          "binding": "FEEPAYER_PK"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "dev-api.kaiapay.app",
+          "custom_domain": true,
+          "zone_name": "kaiapay.app"
+        }
+      ]
+    },
+    "production": {
+      "name": "kaiapay-server-prod",
+      "vars": {
+        "LINK_BASE_URL": "https://kaiapay.app"
+      },
+      "hyperdrive": [
+        {
+          "id": "a21e6ec2b1a14a038c1b23e93a718e93",
+          "binding": "DATABASE"
+        }
+      ],
+      "secrets_store_secrets": [
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_ID",
+          "binding": "PRIVY_APP_ID"
+        },
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "PRIVY_APP_SECRET",
+          "binding": "PRIVY_APP_SECRET"
+        },
+        {
+          "store_id": "70cde2c7c4ce406abd7bf52ab8cdf520",
+          "secret_name": "FEEPAYER_PK",
+          "binding": "FEEPAYER_PK"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "api.kaiapay.app",
+          "custom_domain": true,
+          "zone_name": "kaiapay.app"
+        }
+      ]
+    }
+  }
+}
